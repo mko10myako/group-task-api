@@ -43,6 +43,7 @@ test("valid token returns current user", async () => {
   assert.equal(response.statusCode, 200);
   assert.equal(response.body.success, true);
   assert.equal(response.body.user.email, testUser.email);
+  assert.equal(response.body.user.password, undefined);
 });
 
 test("missing token returns 401", async () => {
