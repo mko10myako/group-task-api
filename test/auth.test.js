@@ -12,7 +12,7 @@ let testUser;
 let validToken;
 
 before(async () => {
-  await mongoose.connect(process.env.MONGO_URI);
+  await mongoose.connect(process.env.MONGO_URI_TEST);
 
   testUser = await User.create({
     name: "Test User",
