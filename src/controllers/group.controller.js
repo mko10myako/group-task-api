@@ -36,3 +36,23 @@ export const createGroup = async (req, res) => {
     });
   }
 };
+
+export const getOwnedGroups = async (req, res) => {
+  
+  try {
+    const groups = await Group.find({
+      owner: req.user._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      groups
+    })
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get groups.",
+    });
+  }
+  
+};
