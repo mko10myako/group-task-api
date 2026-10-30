@@ -111,6 +111,19 @@ test("groups: missing token returns 401", async () => {
   );
 });
 
+test("groups: valid but nonexistent group ID returns 404", async () => {
+  const missingGroupId = new mongoose.Types.ObjectId().toString();
+
+  const response = await request(app)
+  .get(`/api/v1/groups/${missingGroupId}`)
+  .set("Authorization" , `Bearer ${validToken}`);
+
+  assert.equal(response.statusCode, 404);
+  assert.equal(response.body.success, false);
+  assert.equal(response.body.message, "Group not found.")
+
+});
+
 after(async () => {
   if (createdGroup?._id) {
     await Group.findByIdAndDelete(createdGroup._id);
