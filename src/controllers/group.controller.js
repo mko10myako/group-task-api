@@ -1,4 +1,5 @@
 import Group from "../models/group.model.js";
+import mongoose from "mongoose";
 
 export const createGroup = async (req, res) => {
   try {
@@ -55,4 +56,36 @@ export const getOwnedGroups = async (req, res) => {
     });
   }
   
+};
+
+export const getGroupById = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+
+    if (!mongoose.isValidObjectId(groupId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid group ID.",
+      });
+    }
+
+    const group = await Group.findById(groupId);
+
+    if (!group) {
+      return res.status(404).json({
+        success: false,
+        message: "Group not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      group,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get group.",
+    });
+  }
 };
