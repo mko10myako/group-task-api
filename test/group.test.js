@@ -77,6 +77,16 @@ assert.deepEqual(
 );
 });
 
+test("groups: valid group ID returns one group" , async () => {
+  const response = await request(app)
+    .get(`/api/v1/groups/${createdGroup._id}`)
+    .set("Authorization", `Bearer ${validToken}`)
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.success, true);
+  assert.equal(response.body.group._id, createdGroup._id);
+    });
+
 test("groups: missing name returns 400", async () => {
   const response = await request(app)
     .post("/api/v1/groups")
@@ -123,6 +133,7 @@ test("groups: valid but nonexistent group ID returns 404", async () => {
   assert.equal(response.body.message, "Group not found.")
 
 });
+
 
 after(async () => {
   if (createdGroup?._id) {
