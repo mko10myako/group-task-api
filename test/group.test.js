@@ -77,6 +77,16 @@ assert.deepEqual(
 );
 });
 
+test("groups: valid group ID returns one group" , async () => {
+  const response = await request(app)
+    .get(`/api/v1/groups/${createdGroup._id}`)
+    .set("Authorization", `Bearer ${validToken}`)
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.success, true);
+  assert.equal(response.body.group._id, createdGroup._id);
+    });
+
 test("groups: missing name returns 400", async () => {
   const response = await request(app)
     .post("/api/v1/groups")
@@ -95,6 +105,15 @@ test("groups: missing name returns 400", async () => {
 
 });
 
+test("groups: malformed group ID returns 400", async () => {
+  const response = await request(app)
+    .get("/api/v1/groups/not-a-valid-id")
+    .set("Authorization", `Bearer ${validToken}`);
+
+  assert.equal(response.statusCode, 400);
+  assert.equal(response.body.success, false);
+});
+
 test("groups: missing token returns 401", async () => {
   const response = await request(app)
     .post("/api/v1/groups")
@@ -110,6 +129,20 @@ test("groups: missing token returns 401", async () => {
     "Authentication token is required."
   );
 });
+
+test("groups: valid but nonexistent group ID returns 404", async () => {
+  const missingGroupId = new mongoose.Types.ObjectId().toString();
+
+  const response = await request(app)
+  .get(`/api/v1/groups/${missingGroupId}`)
+  .set("Authorization" , `Bearer ${validToken}`);
+
+  assert.equal(response.statusCode, 404);
+  assert.equal(response.body.success, false);
+  assert.equal(response.body.message, "Group not found.")
+
+});
+
 
 after(async () => {
   if (createdGroup?._id) {
