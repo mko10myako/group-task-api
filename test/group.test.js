@@ -105,6 +105,15 @@ test("groups: missing name returns 400", async () => {
 
 });
 
+test("groups: malformed group ID returns 400", async () => {
+  const response = await request(app)
+    .get("/api/v1/groups/not-a-valid-id")
+    .set("Authorization", `Bearer ${validToken}`);
+
+  assert.equal(response.statusCode, 400);
+  assert.equal(response.body.success, false);
+});
+
 test("groups: missing token returns 401", async () => {
   const response = await request(app)
     .post("/api/v1/groups")
