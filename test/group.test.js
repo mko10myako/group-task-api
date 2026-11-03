@@ -12,6 +12,10 @@ import Group from "../src/models/group.model.js";
 let testUser;
 let validToken;
 let createdGroup;
+let nonMemberUser;
+let nonMemberToken;
+let memberUser;
+let memberToken;
 
 before(async () => {
   await mongoose.connect(process.env.MONGO_URI_TEST);
@@ -27,6 +31,34 @@ before(async () => {
     process.env.JWT_SECRET,
     { expiresIn: "5m" }
   );
+
+  await User.deleteOne({ email: "nonmember@example.com" });
+  nonMemberUser = await User.create({
+    name: "Nonmember User",
+    email: "nonmember@example.com",
+    password: "password123"
+  });
+
+nonMemberToken = jwt.sign(
+  { userId: nonMemberUser._id },
+  process.env.JWT_SECRET,
+  { expiresIn: process.env.JWT_EXPIRES_IN }
+);
+
+await User.deleteOne({ email: "member@example.com" });
+
+memberUser = await User.create({
+  name: "Member User",
+  email: "member@example.com",
+  password: "password123",
+});
+
+memberToken = jwt.sign(
+  { userId: memberUser._id },
+  process.env.JWT_SECRET,
+  { expiresIn: process.env.JWT_EXPIRES_IN }
+);
+
 });
 
 test("valid token creates a group", async () => {
@@ -139,14 +171,49 @@ test("groups: valid but nonexistent group ID returns 404", async () => {
 
   assert.equal(response.statusCode, 404);
   assert.equal(response.body.success, false);
-  assert.equal(response.body.message, "Group not found.")
+  assert.equal(response.body.message, "Group not found.");
 
 });
 
+test("groups: a logged-in nonmember requesting an existing group receives 404 so the API does not reveal that the group exists", async () => {
+  const response = await request(app)
+    .get(`/api/v1/groups/${createdGroup._id}`)
+    .set("Authorization", `Bearer ${nonMemberToken}`);
+
+  assert.equal(response.statusCode, 404);
+  assert.equal(response.body.success, false);
+  assert.equal(response.body.message, "Group not found.");
+});
+
+test("groups: a member who is not the owner can get the group", async () => {
+  await Group.findByIdAndUpdate(createdGroup._id, {
+    $push: {
+      members: {
+        user: memberUser._id,
+        role: "member",
+      },
+    },
+  });
+
+  const response = await request(app)
+    .get(`/api/v1/groups/${createdGroup._id}`)
+    .set("Authorization", `Bearer ${memberToken}`);
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.success, true);
+  assert.equal(response.body.group._id, createdGroup._id);
+});
 
 after(async () => {
+  if (memberUser?._id) {
+    await User.findByIdAndDelete(memberUser._id);
+  }
   if (createdGroup?._id) {
     await Group.findByIdAndDelete(createdGroup._id);
+  }
+
+  if (nonMemberUser?._id) {
+    await User.findByIdAndDelete(nonMemberUser._id);
   }
 
   if (testUser?._id) {
