@@ -78,6 +78,19 @@ export const getGroupById = async (req, res) => {
       });
     }
 
+    const isOwner = group.owner.equals(req.user._id);
+
+    const isMember = group.members.some((member) =>
+      member.user.equals(req.user._id)
+    );
+
+    if (!isOwner && !isMember) {
+      return res.status(404).json({
+        success: false,
+        message: "Group not found.",
+      });
+    }
+
     return res.status(200).json({
       success: true,
       group,
